@@ -1,9 +1,4 @@
-# ############################################################################
-# This config file controls all facets of the powerpool mining server.
-# Commented values are the defaults. 
-# ############################################################################
 
-# General process management configurations
 powerpool:
     # The name of the powerpool process on the system. Useful for quickly
     # identifying pid with grep and ps
@@ -17,32 +12,18 @@ powerpool:
     #loggers:
     #    - type: StreamHandler
     #      level: DEBUG
-    
-# The jobmanager is in charge of building jobs for the stratum workers, submitting
-# blocks to rpc servers, and pushing new block notifications to clients
+
 jobmanager:
-    # The class we'll load and provide the following configuration
     type: powerpool.jobmanager.MonitorNetwork
 
-    # should we poll the RPC server for new blocks? True will force polling,
-    # null will poll if push notifications are disabled, and False will force
-    # off
-    #poll: null
+    poll: null
 
-    # time between checking live rpc for new blocks... lower means less orphan
-    # blocks... Unused if not polling
-    #block_poll: 0.2
+    block_poll: 0.2
 
-    # what algorithm should these jobs be hashed with? options are x11, scrypt,
-    # scyptn
     algo: scrypt
+    
+    pow_block_hash: False
 
-    # Should the proof of work algorithm be used to produce the block hash, or
-    # sha256. Most use sha256, but some like Darkcoin use the POW algo
-    #pow_block_hash: False
-
-    # a list of connections to daemons to get block templates from and submit
-    # complete blocks to
     main_coinservs:
         - port: 19332
           address: localhost
@@ -55,23 +36,13 @@ jobmanager:
     # dictionaries, so simply add another list item to merge mine multiple
     # coins
     merged:
-       - enabled: False
-         # the amount of time between pining the auxilury coinserv for new aux work
-         # work_interval: 1
-         # the unique name of the merged coin. used for indexing various
-         # information and logging
-         name: Parallax
-         # whether we clear all previous jobs to push new aux work
-         # flush: false
-         # should we send a celery task to record the block?
-         # send: true
-         # The signal to listen for for block notifications from daemon
-         # Recommended signals are CONT(18), URG(23), CHLD(17), and WINCH(28)
-         # as they normally won't kill processes that recieve them and don't
-         # handle them
-         # signal: null
-         # how we id the block type to celery
-         reporting_id: PLX
+       - enabled: True
+         work_interval: 1
+         name: Dogecoin
+         flush: false
+         send: true
+         signal: null
+         reporting_id: DOGE
          coinservs:
              - port: 1234
                address: 127.0.0.1
@@ -100,34 +71,27 @@ jobmanager:
                username:
                password: 
 
-    # Recommended signals are CONT(18), URG(23), and WINCH(28)
-    # as they normally won't kill processes that recieve them and don't
-    # handle them
-    #signal: null
+    signal: null
+    
     # address that all blocks will go towards in escrow before sending to users
     # CHANGE THIS
     pool_address: ft4MqHvD1HQQVCxzNXn3N6fWCyybiGVEHd
-    # the definition of a target of difficulty 1. 4 zeroes for scrypt, 8 for 
-    # sha...
-    #diff1: 0x0000FFFF00000000000000000000000000000000000000000000000000000000
-    # server side size. synonymous with worker id
-    #extranonce_serv_size: 8
-    # size that clients will generate in bytes
-    #extranonce_size: 4
-
-    # time in seconds between generating a new block template
-    #job_refresh: 15
-
-    # how often we check to see if downed connections are back up
-    #rpc_ping_int: 2
+    diff1: 0x0000FFFF00000000000000000000000000000000000000000000000000000000
+    
+    extranonce_serv_size: 8
+    extranonce_size: 4
+    
+    job_refresh: 15
+    rpc_ping_int: 2
 
     # The number of hashes a single diff1 share takes on average to compute
     # 0xFFFFFFFF for sha256 and dark diff, 0xFFFF for scrypt
-    #hashes_per_share: 0xFFFF  # scrypt diff
+    hashes_per_share: 0xFFFF  # scrypt diff
 
 # Reporter handles communication of new shares, block, etc for recording.
 reporter:
     type: powerpool.reporter.CeleryReporter
+    
     # this defines the celery options that get passed to the daemon. this should
     # define how to connect to the queue server, etc
     #celery: 
@@ -135,32 +99,97 @@ reporter:
     #celery_task_prefix: simplecoin.tasks
     #share_batch_interval: 60
     
-    # Controls whether or not we log oneminuteshares under the user "pool" or
-    # not
+
     #report_pool_stats: true
 
-    # Trackers (share aggregation objects) are not directly tied to clients,
-    # so they just get removed after they've been empty for a while. Time in
-    # seconds for having them be cleaned up
+
     #tracker_expiry_time: 180
 
 # port and address to listen on for stratum server
 stratum:
     interfaces:
-        - port: 3333
+        # Vardiff
+        - port: 3000
           address: 0.0.0.0
-          # The difficulty to start people out when they connect. Will be the
-          # fixed difficulty if vardiff is disabled
-          start_difficulty: 128
-          # whether our this port will be vardiff enabled
+          start_difficulty: 4
+          vardiff: True
+        # Diff 8
+        - port: 3008
+          address: 0.0.0.0
+          start_difficulty: 8
           vardiff: False
-        #- port: 3334
-        #  address: 0.0.0.0
-        #  # The difficulty to start people out when they connect. Will be the
-        #  # fixed difficulty if vardiff is disabled
-        #  start_difficulty: 256
-        #  # whether our this port will be vardiff enabled
-        #  vardiff: True
+        # Diff 16
+        - port: 3016
+          address: 0.0.0.0
+          start_difficulty: 16
+          vardiff: False
+        # Diff 32
+        - port: 3032
+          address: 0.0.0.0
+          start_difficulty: 32
+          vardiff: False
+        # Diff 64
+        - port: 3064
+          address: 0.0.0.0
+          start_difficulty: 64
+          vardiff: False
+        # Diff 128
+        - port: 3128
+          address: 0.0.0.0
+          start_difficulty: 128
+          vardiff: False
+        # Diff 256
+        - port: 3256
+          address: 0.0.0.0
+          start_difficulty: 256
+          vardiff: False
+        # Diff 512
+        - port: 3512
+          address: 0.0.0.0
+          start_difficulty: 512
+          vardiff: False
+        # Diff 1024
+        - port: 4024
+          address: 0.0.0.0
+          start_difficulty: 1024
+          vardiff: False
+        # Diff 2048
+        - port: 5048
+          address: 0.0.0.0
+          start_difficulty: 2048
+          vardiff: False
+        # Diff 4096
+        - port: 10000
+          address: 0.0.0.0
+          start_difficulty: 4096
+          vardiff: False
+        # Diff 6144
+        - port: 10001
+          address: 0.0.0.0
+          start_difficulty: 6144
+          vardiff: False
+        # Diff 8192
+        - port: 10002
+          address: 0.0.0.0
+          start_difficulty: 8192
+          vardiff: False
+        # Diff 12288
+        - port: 10003
+          address: 0.0.0.0
+          start_difficulty: 12288
+          vardiff: False
+        # Diff 16384
+        - port: 10004
+          address: 0.0.0.0
+          start_difficulty: 16384
+          vardiff: False
+        # Diff 32768
+        - port: 10005
+          address: 0.0.0.0
+          start_difficulty: 32768
+          vardiff: False
+
+
 
     # This should be a list of valid "versions" for addresses. Each altcoin has
     # a unique "version" number that can be checked. use
@@ -192,17 +221,17 @@ stratum:
             - 192
             - 256
             - 512
+            - 1024
+            - 2048
+            - 4096
+            - 8192
+            - 16384
+            - 32768
 
-    # time between sending latest job to workers when there is no new block
     push_job_interval: 45
 
-    # Client will be considered idle if we don't recieve a new share from them
-    # for at least x seconds
-    #idle_worker_threshold: 300
-
-    # Client will be disconnected if we don't recieve a new share from them
-    # for at least x seconds
-    #idle_worker_disconnect_threshold: 3600
+    idle_worker_threshold: 300
+    idle_worker_disconnect_threshold: 1200
 
     # the agent server allows data collection agents to connect and report
     # stats about stratum clients. disabled by default. If enabled an agent
